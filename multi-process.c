@@ -1,13 +1,17 @@
 #include <stdio.h>      // printf, fprintf
 #include <sys/wait.h>   // wait
 #include <sys/types.h>  // getpid, wait
+#include <signal.h>     // sigaction, SIGLARM
 #include <limits.h>     // LONG_MIN, LONG_MAX, ULLONG_MAX
 #include <unistd.h>     // getpid
-#include <signal.h>     // sigaction, SIGLARM
+#include <string.h>     // memset
 #include "multi-process.h"
 
-int process_index = 0;      // 进程索引编号
 int isStop = 0;             // 用于标记测试终止
+
+typedef struct param_st {   // 自定义测试参数
+    long long count;
+} Param;
 
 void handle_signal_child(int sigNum)
 {
@@ -17,12 +21,15 @@ void handle_signal_child(int sigNum)
 }
 
 /* 实际业务测试函数 */
-void doTest() {
+void doTest(void *param) {
     unsigned long long i = 0;
+    Param *pa = (Param *)param;
     for(; i < ULLONG_MAX && !isStop; ++i) {
-        /* Do some work */
+        /* DO YOUR WORK */
+        ++pa->count;
+        /* DO YOUR WORK */
     }
-    printf("process [pid = %6u] result: %llu\n", getpid(), i);
+    printf("process [pid = %6u] result: %llu\n", getpid(), pa->count);
 }
 
 int main(int argc, char *argv[]) {
@@ -41,6 +48,9 @@ int main(int argc, char *argv[]) {
 
     printf("\n-----------------------------Start Testing------------------------------\n\n");
 
+    /* COMMON INIT */
+    /* COMMON INIT */
+
     while(isParent && i < opt.procs) {
         pid =  fork();
         if(pid == -1) {         /* error */
@@ -48,7 +58,6 @@ int main(int argc, char *argv[]) {
             return -1;
         }
         else if(pid == 0) {     /* child */
-            process_index = i;
             isParent = 0;
         }
         else {                  /* parent */
@@ -56,12 +65,19 @@ int main(int argc, char *argv[]) {
         ++i;
     }
     if(isParent) {
+        /* PARENT INIT */
+        /* PARENT INIT */
         for(i =0 ; i < opt.procs; ++i) {
             pid = wait(&wstatus);                       // 等待子进程结束
             printf("process [pid = %6d] exit\n", pid);
         }
     }
     else {
+        /* CHILD INIT */
+        Param param;
+        memset(&param, 0, sizeof(Param));
+        /* CHILD INIT */
+
         act_child.sa_handler = handle_signal_child;
         sigemptyset(&act_child.sa_mask);
         //sigaddset(&act_child.sa_mask, SIGQUIT);
@@ -74,7 +90,7 @@ int main(int argc, char *argv[]) {
         }
         //signal(SIGALRM, handle_signal_child);
         alarm(opt.duration);                            // 设置测试时长
-        doTest();
+        doTest(&param);
         return 0;       /* child finished work */
     }
 
