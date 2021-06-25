@@ -5,7 +5,7 @@ LD			:=	gcc
 CCFLAGS		:=	"-g"
 LDFLAGS		:=
 exe			:=  test
-obj			:=	multi-process.o
+obj			:=	multi-process.o opt.o
 link		:=
 
 all:$(obj)
