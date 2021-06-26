@@ -75,7 +75,8 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    mylog("\n-----------------------------Start Testing------------------------------\n\n");
+    mylog("\n-----------------------------Start Testing-----------------------"
+          "-------\n\n");
 
 
     /* COMMON INIT */
@@ -105,7 +106,8 @@ int main(int argc, char *argv[]) {
         /* PARENT INIT */
         memset(&act_parent, 0, sizeof(act_parent));
         act_parent.sa_handler = handle_signal_parent;
-        act_parent.sa_flags = SA_RESTART;               // 使wait被中断时可以自动恢复 
+        /* 使wait被中断时可以自动恢复 */
+        act_parent.sa_flags = SA_RESTART;
         rv = sigaction(SIGALRM, &act_parent, NULL);     // 用于定时统计结果
         fail_if(rv, "sigaction() failed\n");
 
@@ -121,8 +123,9 @@ int main(int argc, char *argv[]) {
             alarm(0);                                   // 终止定时器
             fail_if(-1 == pid, "wait() failed, errno=%d\n", errno);
             mylog("process [pid = %6d] exit\n", pid);
-            mylog("process [pid = %6u] count %12llu in %lus,  average %12.0lf/s\n", 
-                   pid, shm[i].count, opt.duration, shm[i].count / (double)opt.duration);
+            mylog("process [pid = %6u] count %12llu in %lus,"
+                  "  average %12.0lf/s\n", pid, shm[i].count, opt.duration, 
+                  shm[i].count / (double)opt.duration);
             final.count += shm[i].count;
         }
         mylog("total count %12llu in %lus,  average %12.0lf/s\n", 
@@ -139,7 +142,8 @@ int main(int argc, char *argv[]) {
         act_child.sa_handler = handle_signal_child;
         sigemptyset(&act_child.sa_mask);
         act_child.sa_flags = SA_RESETHAND;
-        rv = sigaction(SIGALRM, &act_child, NULL);      // 用于测试时间到时，通知子进程结束测试
+        /* 用于测试时间到时，通知子进程结束测试 */
+        rv = sigaction(SIGALRM, &act_child, NULL);
         fail_if(rv, "sigaction() failed\n");
         alarm(opt.duration);                            // 设置测试时长
         doTest(&param);

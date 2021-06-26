@@ -33,7 +33,8 @@ int process_options(int argc, char *argv[], Options *opt) {
      *      const char *name;       // 参数的完整名称，对应命令中的 --xxx
      *      int  has_arg;           // 该参数是否带有一个值，如 –config xxx.conf
      *      int *flag;              // 一般设置为NULL
-     *      int  val;               // 解析到该参数后getopt_long函数的返回值，为了方便维护，一般对应getopt_long调用时第三个参数
+     *      int  val;               // 解析到该参数后getopt_long函数的返回值，
+     *                      // 为了方便维护，一般对应getopt_long调用时第三个参数
      *  };
      */
     static struct option arg_options[] = 
@@ -46,11 +47,12 @@ int process_options(int argc, char *argv[], Options *opt) {
     };
 
     /**
-     *  注意：传递给getopt_long的第三个参数对应了命令行参数的缩写形式，如-h, -v, -c等，
+     *  注意：传递给getopt_long的第三个参数对应了命令行参数的缩写形式，如-h等，
      *  如果字符后面带有冒号":"，则说明该参数后跟一个值，如-c xxxxxx             
      *  如果开头有冒号":"，则当一个选项缺少参数时，返回":"，否则，返回"?"
      */
-    while ((c = getopt_long(argc, argv, ":p:d:i:h", arg_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, ":p:d:i:h", arg_options, &option_index)
+            ) != -1) {
         switch (c) {
         case 'h':
             ShowHelpInfo(argv[0]);
@@ -85,7 +87,8 @@ int process_options(int argc, char *argv[], Options *opt) {
         case 'i':
             interval = strtol(optarg, NULL, 0);
             if (interval == LONG_MIN || interval == LONG_MAX) {
-                mylog("The interval of statistics (%s) is overflow\n\n", optarg);
+                mylog("The interval of statistics (%s) is overflow\n\n", 
+                      optarg);
                 ShowHelpInfo(argv[0]);
                 return -1;
             }
