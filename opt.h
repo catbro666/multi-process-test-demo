@@ -4,6 +4,7 @@
 typedef struct options_st {
     long procs;                 // 进程数
     long duration;              // 测试时间
+    long interval;              // 统计间隔
 } Options;
 
 /* 处理参数 */
