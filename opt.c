@@ -3,20 +3,21 @@
 #include <limits.h>     // LONG_MIN, LONG_MAX, ULLONG_MAX
 #include <string.h>     // memset
 #include <stdlib.h>     // strtol, abort
-#include <stdio.h>      // fprintf
 #include <getopt.h>     // geropt_long
 
+#include "common.h"     // mylog
+
 static void ShowHelpInfo(char *name) {
-    fprintf(stderr, "Usage: %s [options]\n\n", name);
-    fprintf(stderr, "  Options:\n");
-    fprintf(stderr, "    -p/--proc         Number of processes (default: 1)\n");
-    fprintf(stderr, "    -d/--duration     Duration of test (unit: s, default: 10)\n");
-    fprintf(stderr, "    -i/--interval     Interval of statisics (unit: s, default: 1)\n");
-    fprintf(stderr, "    -h/--help         Show the help info\n");
-    fprintf(stderr, "\n");
-    fprintf(stderr, "  Example:\n");
-    fprintf(stderr, "    %s -p 4 -d 30 -i 2\n", name);
-    fprintf(stderr, "\n");
+    mylog("Usage: %s [options]\n\n", name);
+    mylog("  Options:\n");
+    mylog("    -p/--proc         Number of processes (default: 1)\n");
+    mylog("    -d/--duration     Duration of test (unit: s, default: 10)\n");
+    mylog("    -i/--interval     Interval of statisics (unit: s, default: 1)\n");
+    mylog("    -h/--help         Show the help info\n");
+    mylog("\n");
+    mylog("  Example:\n");
+    mylog("    %s -p 4 -d 30 -i 2\n", name);
+    mylog("\n");
 }
 
 /* 处理参数 */
@@ -54,16 +55,16 @@ int process_options(int argc, char *argv[], Options *opt) {
         case 'h':
             ShowHelpInfo(argv[0]);
             //fprintf(stderr,"option is -%c, optarv is %s\n", c, optarg);
-            return 0;
+            exit(0);
         case 'p':
             procs = strtol(optarg, NULL, 0);
             if (procs == LONG_MIN || procs == LONG_MAX) {
-                fprintf(stderr, "The number of processes (%s) is overflow\n\n", optarg);
+                mylog("The number of processes (%s) is overflow\n\n", optarg);
                 ShowHelpInfo(argv[0]);
                 return -1;
             }
             else if (procs <= 0) {
-                fprintf(stderr, "The number of processes must be > 0\n\n");
+                mylog("The number of processes must be > 0\n\n");
                 ShowHelpInfo(argv[0]);
                 return -1;
             }
@@ -71,12 +72,12 @@ int process_options(int argc, char *argv[], Options *opt) {
         case 'd':
             duration = strtol(optarg, NULL, 0);
             if (duration == LONG_MIN || duration == LONG_MAX) {
-                fprintf(stderr, "The duration of test (%s) is overflow\n\n", optarg);
+                mylog("The duration of test (%s) is overflow\n\n", optarg);
                 ShowHelpInfo(argv[0]);
                 return -1;
             }
             else if (procs <= 0) {
-                fprintf(stderr, "The duration of test must be > 0\n\n");
+                mylog("The duration of test must be > 0\n\n");
                 ShowHelpInfo(argv[0]);
                 return -1;
             }
@@ -84,31 +85,31 @@ int process_options(int argc, char *argv[], Options *opt) {
         case 'i':
             interval = strtol(optarg, NULL, 0);
             if (interval == LONG_MIN || interval == LONG_MAX) {
-                fprintf(stderr, "The interval of statistics (%s) is overflow\n\n", optarg);
+                mylog("The interval of statistics (%s) is overflow\n\n", optarg);
                 ShowHelpInfo(argv[0]);
                 return -1;
             }
             else if (procs <= 0) {
-                fprintf(stderr, "The interval of statistics must be > 0\n\n");
+                mylog("The interval of statistics must be > 0\n\n");
                 ShowHelpInfo(argv[0]);
                 return -1;
             }
             break;
         case '?':
-            fprintf (stderr, "Unknown option -%c\n\n", optopt);
+            mylog("Unknown option -%c\n\n", optopt);
             ShowHelpInfo(argv[0]);
             return -1;
         case ':':
-           fprintf (stderr, "Option -%c requires an argument\n\n", optopt);
-           ShowHelpInfo(argv[0]);
-           return -1;
+            mylog("Option -%c requires an argument\n\n", optopt);
+            ShowHelpInfo(argv[0]);
+            return -1;
         default:
-            abort();  
+            exit(1);  
         }
     }
-    fprintf(stderr, "processes:  %ld\n", procs);
-    fprintf(stderr, "duration:   %lds\n", duration);
-    fprintf(stderr, "interval:   %lds\n", interval);
+    mylog("processes:  %ld\n", procs);
+    mylog("duration:   %lds\n", duration);
+    mylog("interval:   %lds\n", interval);
     memset(opt, 0, sizeof(Options));
     opt->procs = procs;
     opt->duration = duration;
@@ -116,5 +117,3 @@ int process_options(int argc, char *argv[], Options *opt) {
 
     return 0;
 }
-
-
