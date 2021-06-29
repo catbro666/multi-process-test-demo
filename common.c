@@ -13,6 +13,7 @@ void fail_if(bool condition, const char *fmt, ...) {
         exit(1);
     }
 }
+
 void fail(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -27,3 +28,15 @@ void mylog(const char *fmt, ...) {
     vfprintf(stderr, fmt, args);
     va_end(args);
 }
+
+void fail_clean_if(bool condition, cleanup clean, void *param, const char *fmt, ...) {
+    if (condition) {
+        va_list args;
+        va_start(args, fmt);
+        vfprintf(stderr, fmt, args);
+        va_end(args);
+        clean(param);
+        exit(1);
+    }
+}
+

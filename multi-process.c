@@ -9,14 +9,7 @@
 #include <string.h>     // memset
 #include "common.h"
 #include "opt.h"
-
-typedef struct param_st {   // 自定义测试参数
-    long index;
-} Param;
-
-typedef struct result_st {   // 自定义测试结果
-    unsigned long long count;
-} Result;
+#include "work.h"
 
 int isStop = 0;             // 用于标记测试终止
 Options opt;                // 命令行选项
@@ -37,7 +30,8 @@ void handle_signal_parent(int sigNum)
     if (sigNum == SIGALRM) {
         /* DO REAL-TIME STATISTICS */
         memset(&res_total, 0, sizeof(Result));
-        for (long i = 0; i < opt.procs; ++i) {
+        long i = 0;
+        for (; i < opt.procs; ++i) {
             res_total.count += shm[i].count;
         }
         mylog("total count %12llu,  average %12.0lf/s\n",
@@ -49,12 +43,13 @@ void handle_signal_parent(int sigNum)
     }
 }
 
-/* 实际业务测试函数 */
+/* 执行测试主循环函数 */
 void doTest(void *param) {
     unsigned long long i = 0;
-    Param *pa = (Param *)param;
+    HashParam *pa = (HashParam *)param;
     for (; i < ULLONG_MAX && !isStop; ++i) {
         /* DO YOUR WORK */
+        test_work(param);
         ++shm[pa->index].count;
         /* DO YOUR WORK */
     }
@@ -89,6 +84,8 @@ int main(int argc, char *argv[]) {
     /* 这里直接进行IPC_RMID操作，进程退出之后会自动detach了, 从而释放共享内存 */
     shmctl(shmid, IPC_RMID, 0);
     memset(shm, 0, sizeof(sizeof(Result) * opt.procs));
+
+    global_init(&opt);
     /* COMMON INIT */
 
     while(isParent && i < opt.procs) {
@@ -96,7 +93,7 @@ int main(int argc, char *argv[]) {
         fail_if(-1 == pid, "fork failed %d\n", pid);    /* error */
         if(pid == 0) {                                  /* child */
             isParent = 0;
-            proc_index = i;     // 记录进程索引
+            proc_index = i;                             // 记录进程索引
         }
         else {                                          /* parent */
         }
@@ -131,12 +128,15 @@ int main(int argc, char *argv[]) {
         mylog("total count %12llu in %lus,  average %12.0lf/s\n", 
                final.count, opt.duration, final.count / (double)opt.duration);
         /* DO FINAL STATISTICS */
+
+        /* PARENT CLEANUP */
+        global_clean();
+        /* PARENT CLEANUP */
     }
     else {
         /* CHILD INIT */
-        Param param;
-        memset(&param, 0, sizeof(Param));
-        param.index = proc_index;
+        void *param;
+        test_init(&opt, &param, proc_index);
         /* CHILD INIT */
 
         act_child.sa_handler = handle_signal_child;
@@ -146,7 +146,12 @@ int main(int argc, char *argv[]) {
         rv = sigaction(SIGALRM, &act_child, NULL);
         fail_if(rv, "sigaction() failed\n");
         alarm(opt.duration);                            // 设置测试时长
-        doTest(&param);
+        doTest(param);
+
+        /* CHILD CLEANUP */
+        test_clean(param);
+        global_clean();
+        /* CHILD CLEANUP */
         return 0;       /* child finished work */
     }
 
